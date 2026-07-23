@@ -1,103 +1,157 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { motion, useMotionValue, useSpring } from 'framer-motion';
 
 export const CustomCursor = () => {
-    const [isPointer, setIsPointer] = useState(false);
-    const [cursorVariant, setCursorVariant] = useState('default');
+  const [isPointer, setIsPointer] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [cursorText, setCursorText] = useState('');
 
-    const cursorX = useMotionValue(-100);
-    const cursorY = useMotionValue(-100);
+  // Raw mouse position — updated every frame
+  const mouseX = useMotionValue(-100);
+  const mouseY = useMotionValue(-100);
 
-    const springConfig = { damping: 20, stiffness: 400, mass: 0.5 };
-    const cursorXSpring = useSpring(cursorX, springConfig);
-    const cursorYSpring = useSpring(cursorY, springConfig);
+  // Dot: follows mouse instantly via RAF (no spring)
+  const dotRef = useRef(null);
+  const dotPos = useRef({ x: -100, y: -100 });
 
-    useEffect(() => {
-        const moveCursor = (e) => {
-            cursorX.set(e.clientX - 20);
-            cursorY.set(e.clientY - 20);
-        };
+  // Ring: very slight spring lag
+  const ringX = useSpring(mouseX, { stiffness: 500, damping: 35, mass: 0.4 });
+  const ringY = useSpring(mouseY, { stiffness: 500, damping: 35, mass: 0.4 });
 
-        const handleMouseOver = (e) => {
-            const target = e.target;
-            const isInteractive =
-                target instanceof HTMLAnchorElement ||
-                target instanceof HTMLButtonElement ||
-                target.closest('a') ||
-                target.closest('button') ||
-                window.getComputedStyle(target).cursor === 'pointer';
+  // Halo: slightly more lag
+  const haloX = useSpring(mouseX, { stiffness: 250, damping: 28, mass: 0.6 });
+  const haloY = useSpring(mouseY, { stiffness: 250, damping: 28, mass: 0.6 });
 
-            setIsPointer(isInteractive);
+  useEffect(() => {
+    const hasFinePointer = window.matchMedia('(pointer: fine)').matches;
+    if (!hasFinePointer) return;
 
-            // Check if hovering over text or images
-            if (target.tagName === 'H1' || target.tagName === 'H2' || target.tagName === 'H3' || target.tagName === 'IMG') {
-                setCursorVariant('distort');
-            } else {
-                setCursorVariant('default');
-            }
-        };
+    const moveCursor = (e) => {
+      mouseX.set(e.clientX);
+      mouseY.set(e.clientY);
+      if (!isVisible) setIsVisible(true);
+    };
 
-        window.addEventListener('mousemove', moveCursor);
-        document.addEventListener('mouseover', handleMouseOver);
+    // RAF loop for instant dot tracking
+    let raf;
+    const trackDot = () => {
+      const tx = mouseX.get();
+      const ty = mouseY.get();
+      // Lerp toward target — smooth but near-instant
+      dotPos.current.x += (tx - dotPos.current.x) * 0.45;
+      dotPos.current.y += (ty - dotPos.current.y) * 0.45;
+      if (dotRef.current) {
+        dotRef.current.style.transform = `translate(${dotPos.current.x}px, ${dotPos.current.y}px) translate(-50%, -50%)`;
+      }
+      raf = requestAnimationFrame(trackDot);
+    };
 
-        return () => {
-            window.removeEventListener('mousemove', moveCursor);
-            document.removeEventListener('mouseover', handleMouseOver);
-        };
-    }, [cursorX, cursorY]);
+    const handleMouseOver = (e) => {
+      const target = e.target;
+      const isInteractive =
+        target instanceof HTMLAnchorElement ||
+        target instanceof HTMLButtonElement ||
+        target.closest('a') ||
+        target.closest('button') ||
+        target.closest('[role="button"]') ||
+        target.closest('input') ||
+        target.closest('textarea') ||
+        target.closest('select') ||
+        window.getComputedStyle(target).cursor === 'pointer';
 
-    return (
-        <>
-            {/* SVG filter for distortion effect */}
-            <svg className="hidden">
-                <defs>
-                    <filter id="liquid-distortion">
-                        <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="1" result="turbulence">
-                            <animate attributeName="baseFrequency" dur="3s" values="0.01;0.02;0.01" repeatCount="indefinite" />
-                        </feTurbulence>
-                        <feDisplacementMap in="SourceGraphic" in2="turbulence" scale="10" />
-                    </filter>
-                </defs>
-            </svg>
+      setIsPointer(isInteractive);
 
-            {/* Main cursor with liquid effect */}
-            <motion.div
-                className="fixed top-0 left-0 w-10 h-10 pointer-events-none z-[9999] mix-blend-difference hidden md:block"
-                style={{
-                    x: cursorXSpring,
-                    y: cursorYSpring,
-                }}
-            >
-                <motion.div
-                    animate={{
-                        scale: isPointer ? 1.8 : 1,
-                        opacity: cursorVariant === 'distort' ? 0.8 : 1,
-                    }}
-                    transition={{ duration: 0.15, ease: "easeOut" }}
-                    className="w-full h-full rounded-full border-2 border-white bg-white/30 backdrop-blur-sm"
-                    style={{
-                        filter: cursorVariant === 'distort' ? 'url(#liquid-distortion)' : 'none',
-                        boxShadow: '0 0 20px rgba(255,255,255,0.3)',
-                    }}
-                />
-            </motion.div>
+      const cursorEl = target.closest('[data-cursor]');
+      setCursorText(cursorEl ? cursorEl.getAttribute('data-cursor') : '');
+    };
 
-            {/* Outer ring for depth */}
-            <motion.div
-                className="fixed top-0 left-0 w-10 h-10 pointer-events-none z-[9998] hidden md:block"
-                style={{
-                    x: cursorXSpring,
-                    y: cursorYSpring,
-                }}
-            >
-                <motion.div
-                    animate={{
-                        scale: isPointer ? 2.2 : 1.3,
-                    }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
-                    className="w-full h-full rounded-full border border-white/20"
-                />
-            </motion.div>
-        </>
-    );
+    const handleMouseDown = () => setIsPressed(true);
+    const handleMouseUp = () => setIsPressed(false);
+    const handleMouseLeave = () => setIsVisible(false);
+    const handleBlur = () => setIsVisible(false);
+
+    window.addEventListener('mousemove', moveCursor, { passive: true });
+    window.addEventListener('pointermove', moveCursor, { passive: true });
+    document.addEventListener('mouseover', handleMouseOver, { passive: true });
+    window.addEventListener('mousedown', handleMouseDown, { passive: true });
+    window.addEventListener('mouseup', handleMouseUp, { passive: true });
+    document.addEventListener('mouseleave', handleMouseLeave, { passive: true });
+    window.addEventListener('blur', handleBlur, { passive: true });
+    raf = requestAnimationFrame(trackDot);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('mousemove', moveCursor);
+      window.removeEventListener('pointermove', moveCursor);
+      document.removeEventListener('mouseover', handleMouseOver);
+      window.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mouseleave', handleMouseLeave);
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, [mouseX, mouseY]);
+
+  if (!isVisible) return null;
+
+  return (
+    <>
+      {/* Halo — outermost, subtle lag */}
+      <motion.div
+        className="fixed top-0 left-0 pointer-events-none z-[9995]"
+        style={{ x: haloX, y: haloY, translateX: '-50%', translateY: '-50%', mixBlendMode: 'difference' }}
+      >
+        <motion.div
+          animate={{
+            width: isPointer ? 100 : 0,
+            height: isPointer ? 100 : 0,
+            opacity: isPointer ? 0.08 : 0,
+          }}
+          transition={{ duration: 0.25 }}
+          className="rounded-full border border-white/10"
+        />
+      </motion.div>
+
+      {/* Ring — slight lag */}
+      <motion.div
+        className="fixed top-0 left-0 pointer-events-none z-[9998]"
+        style={{ x: ringX, y: ringY, translateX: '-50%', translateY: '-50%', mixBlendMode: 'difference' }}
+      >
+        <motion.div
+          animate={{
+            width: isPointer ? 52 : 30,
+            height: isPointer ? 52 : 30,
+            opacity: isPointer ? 0.25 : 0.45,
+            scale: isPressed ? 0.8 : 1,
+          }}
+          transition={{ duration: 0.2 }}
+          className="rounded-full border-[1.5px] border-white"
+        />
+      </motion.div>
+
+      {/* Dot — instant follow via RAF */}
+      <div
+        ref={dotRef}
+        className="fixed top-0 left-0 pointer-events-none z-[9999]"
+        style={{ willChange: 'transform', mixBlendMode: 'difference' }}
+      >
+        <motion.div
+          animate={{
+            width: isPointer ? 44 : 8,
+            height: isPointer ? 44 : 8,
+            opacity: isPointer ? 0.3 : 1,
+            scale: isPressed ? 0.6 : 1,
+          }}
+          transition={{ duration: 0.15 }}
+          className="rounded-full bg-white flex items-center justify-center"
+        >
+          {cursorText && isPointer && (
+            <span className="text-[7px] font-mono uppercase tracking-widest text-black whitespace-nowrap pointer-events-none">
+              {cursorText}
+            </span>
+          )}
+        </motion.div>
+      </div>
+    </>
+  );
 };

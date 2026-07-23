@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /api/
 
-Sitemap: https://dennis-r.vercel.app/api/sitemap
+Sitemap: https://dennis-r.vercel.app/sitemap.xml
