@@ -37,12 +37,12 @@ const SectionReveal = ({
           opacity: 1,
           ...dir.visible,
           transition: {
-            duration: duration.slow,
+            duration: duration.dramatic,
             ease: easing.outExpo,
             delay,
             ...(staggerChildren && {
               staggerChildren: stagger.normal,
-              delayChildren: delay + 0.1,
+              delayChildren: delay + 0.15,
             }),
           },
         },

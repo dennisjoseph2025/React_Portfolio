@@ -8,7 +8,7 @@ const TextScramble = ({
   children,
   as: Tag = 'span',
   className = '',
-  duration = 800,
+  duration = 1200,
   delay = 0,
   once = true,
 }) => {
