@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion, useMotionValue, useSpring } from 'framer-motion';
 
 export const CustomCursor = () => {
@@ -7,19 +7,15 @@ export const CustomCursor = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [cursorText, setCursorText] = useState('');
 
-  // Raw mouse position — updated every frame
   const mouseX = useMotionValue(-100);
   const mouseY = useMotionValue(-100);
 
-  // Dot: follows mouse instantly via RAF (no spring)
   const dotRef = useRef(null);
   const dotPos = useRef({ x: -100, y: -100 });
 
-  // Ring: very slight spring lag
   const ringX = useSpring(mouseX, { stiffness: 500, damping: 35, mass: 0.4 });
   const ringY = useSpring(mouseY, { stiffness: 500, damping: 35, mass: 0.4 });
 
-  // Halo: slightly more lag
   const haloX = useSpring(mouseX, { stiffness: 250, damping: 28, mass: 0.6 });
   const haloY = useSpring(mouseY, { stiffness: 250, damping: 28, mass: 0.6 });
 
@@ -27,18 +23,21 @@ export const CustomCursor = () => {
     const hasFinePointer = window.matchMedia('(pointer: fine)').matches;
     if (!hasFinePointer) return;
 
+    const style = document.createElement('style');
+    style.id = 'cc-hide-cursor';
+    style.textContent = '*, *::before, *::after { cursor: none !important; }';
+    document.head.appendChild(style);
+
     const moveCursor = (e) => {
       mouseX.set(e.clientX);
       mouseY.set(e.clientY);
       if (!isVisible) setIsVisible(true);
     };
 
-    // RAF loop for instant dot tracking
     let raf;
     const trackDot = () => {
       const tx = mouseX.get();
       const ty = mouseY.get();
-      // Lerp toward target — smooth but near-instant
       dotPos.current.x += (tx - dotPos.current.x) * 0.45;
       dotPos.current.y += (ty - dotPos.current.y) * 0.45;
       if (dotRef.current) {
@@ -81,6 +80,8 @@ export const CustomCursor = () => {
     raf = requestAnimationFrame(trackDot);
 
     return () => {
+      const cs = document.getElementById('cc-hide-cursor');
+      if (cs) cs.remove();
       cancelAnimationFrame(raf);
       window.removeEventListener('mousemove', moveCursor);
       window.removeEventListener('pointermove', moveCursor);
@@ -92,11 +93,8 @@ export const CustomCursor = () => {
     };
   }, [mouseX, mouseY]);
 
-  if (!isVisible) return null;
-
   return (
-    <>
-      {/* Halo — outermost, subtle lag */}
+    <div style={{ opacity: isVisible ? 1 : 0, transition: 'opacity 0.15s' }}>
       <motion.div
         className="fixed top-0 left-0 pointer-events-none z-[9995]"
         style={{ x: haloX, y: haloY, translateX: '-50%', translateY: '-50%', mixBlendMode: 'difference' }}
@@ -112,7 +110,6 @@ export const CustomCursor = () => {
         />
       </motion.div>
 
-      {/* Ring — slight lag */}
       <motion.div
         className="fixed top-0 left-0 pointer-events-none z-[9998]"
         style={{ x: ringX, y: ringY, translateX: '-50%', translateY: '-50%', mixBlendMode: 'difference' }}
@@ -129,7 +126,6 @@ export const CustomCursor = () => {
         />
       </motion.div>
 
-      {/* Dot — instant follow via RAF */}
       <div
         ref={dotRef}
         className="fixed top-0 left-0 pointer-events-none z-[9999]"
@@ -152,6 +148,6 @@ export const CustomCursor = () => {
           )}
         </motion.div>
       </div>
-    </>
+    </div>
   );
 };

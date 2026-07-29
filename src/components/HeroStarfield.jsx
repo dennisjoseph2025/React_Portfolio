@@ -63,6 +63,7 @@ const HeroStarfield = () => {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const container = canvas.parentElement;
     const ctx = canvas.getContext('2d');
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
@@ -102,9 +103,18 @@ const HeroStarfield = () => {
     window.addEventListener('touchstart', onTouch, { passive: true });
     window.addEventListener('touchend', onTouchEnd, { passive: true });
 
+    let isVisible = true;
+    const visObs = new IntersectionObserver(([e]) => { isVisible = e.isIntersecting; }, { threshold: 0 });
+    if (container) visObs.observe(container);
+
     let lastTime = performance.now();
 
     const tick = (now) => {
+      if (!isVisible) {
+        lastTime = now;
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
       const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
       timeRef.current += dt;
@@ -200,15 +210,10 @@ const HeroStarfield = () => {
 
       for (let i = 0; i < nodes.length; i++) {
         const n = nodes[i];
-        const glowR = n.size * 5;
 
-        const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, glowR);
-        grad.addColorStop(0, `rgba(${n.r},${n.g},${n.b},0.6)`);
-        grad.addColorStop(0.25, `rgba(${n.r},${n.g},${n.b},0.25)`);
-        grad.addColorStop(1, `rgba(${n.r},${n.g},${n.b},0)`);
         ctx.beginPath();
-        ctx.arc(n.x, n.y, glowR, 0, Math.PI * 2);
-        ctx.fillStyle = grad;
+        ctx.arc(n.x, n.y, n.size * 3, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${n.r},${n.g},${n.b},0.08)`;
         ctx.fill();
 
         ctx.beginPath();
@@ -234,6 +239,7 @@ const HeroStarfield = () => {
 
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      visObs.disconnect();
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', onMouse);
       window.removeEventListener('mouseleave', onLeave);

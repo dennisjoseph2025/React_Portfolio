@@ -46,7 +46,7 @@ const MagneticLink = ({ target, children, onHoverStart, onHoverEnd }) => {
         if (isHovered) { setIsHovered(false); onHoverEnd?.(); }
       }
     };
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [x, y, isHovered, onHoverStart, onHoverEnd]);
 

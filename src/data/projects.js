@@ -28,21 +28,21 @@ export const projects = [
         color: "#22C55E",
         github: "https://github.com/dennisjoseph2025/PyDocAI",
         demo: "https://pydocai.vercel.app",
-        image: "/projects/pydocai.1.png",
+        image: "/projects/pydocai.1.webp",
         screenshots: [
-            "/projects/pydocai.1.png",
-            "/projects/pydocai.2.png",
-            "/projects/pydocai.3.png",
-            "/projects/pydocai.4.png",
-            "/projects/pydocai.5.png",
-            "/projects/pydocai.6.png",
-            "/projects/pydocai.7.png",
-            "/projects/pydocai.8.png",
-            "/projects/pydocai.9.png",
-            "/projects/pydocai.10.png",
-            "/projects/pydocai.11.png",
-            "/projects/pydocai.12.png",
-            "/projects/pydocai.13.png"
+            "/projects/pydocai.1.webp",
+            "/projects/pydocai.2.webp",
+            "/projects/pydocai.3.webp",
+            "/projects/pydocai.4.webp",
+            "/projects/pydocai.5.webp",
+            "/projects/pydocai.6.webp",
+            "/projects/pydocai.7.webp",
+            "/projects/pydocai.8.webp",
+            "/projects/pydocai.9.webp",
+            "/projects/pydocai.10.webp",
+            "/projects/pydocai.11.webp",
+            "/projects/pydocai.12.webp",
+            "/projects/pydocai.13.webp"
         ]
     },
     {
@@ -74,21 +74,21 @@ export const projects = [
         color: "#8B5CF6",
         github: "https://github.com/dennisjoseph2025/Denjo-C_E-Commerce",
         demo: "https://denjo-c.vercel.app/home",
-        image: "/projects/denjo-c.1.png",
+        image: "/projects/denjo-c.1.webp",
         screenshots: [
-            "/projects/denjo-c.1.png",
-            "/projects/denjo-c.2.png",
-            "/projects/denjo-c.3.png",
-            "/projects/denjo-c.4.png",
-            "/projects/denjo-c.5.png",
-            "/projects/denjo-c.6.png",
-            "/projects/denjo-c.7.png",
-            "/projects/denjo-c.8.png",
-            "/projects/denjo-c.9.png",
-            "/projects/denjo-c.10.png",
-            "/projects/denjo-c.11.png",
-            "/projects/denjo-c.12.png",
-            "/projects/denjo-c.13.png"
+            "/projects/denjo-c.1.webp",
+            "/projects/denjo-c.2.webp",
+            "/projects/denjo-c.3.webp",
+            "/projects/denjo-c.4.webp",
+            "/projects/denjo-c.5.webp",
+            "/projects/denjo-c.6.webp",
+            "/projects/denjo-c.7.webp",
+            "/projects/denjo-c.8.webp",
+            "/projects/denjo-c.9.webp",
+            "/projects/denjo-c.10.webp",
+            "/projects/denjo-c.11.webp",
+            "/projects/denjo-c.12.webp",
+            "/projects/denjo-c.13.webp"
         ]
     },
     {
@@ -117,9 +117,9 @@ export const projects = [
         color: "#06B6D4",
         github: "https://github.com/dennisjoseph2025/student_management_django",
         demo: "https://student-management-django-omega.vercel.app/",
-        image: "/projects/student_management.png",
+        image: "/projects/student_management.webp",
         screenshots: [
-            "/projects/student_management.png"
+            "/projects/student_management.webp"
         ]
     }
 ];

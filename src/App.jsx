@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import ReactLenis from '@studio-freight/react-lenis';
@@ -15,15 +15,14 @@ import SectionIndicator from './components/SectionIndicator';
 import PerformanceMonitor from './components/PerformanceMonitor';
 import AutoDemo from './components/AutoDemo';
 import Hero3D from './components/Hero3D';
-
-const About = lazy(() => import('./components/About'));
-const Skills = lazy(() => import('./components/Skills'));
-const Experience = lazy(() => import('./components/Experience'));
-const Projects = lazy(() => import('./components/Projects'));
-const Certifications = lazy(() => import('./components/Certifications'));
-const Contact = lazy(() => import('./components/Contact'));
-const Footer = lazy(() => import('./components/Footer'));
-const ProjectDetail = lazy(() => import('./pages/ProjectDetail'));
+import About from './components/About';
+import Skills from './components/Skills';
+import Experience from './components/Experience';
+import Projects from './components/Projects';
+import Certifications from './components/Certifications';
+import Contact from './components/Contact';
+import Footer from './components/Footer';
+import ProjectDetail from './pages/ProjectDetail';
 
 const MainPage = () => {
   const location = useLocation();
@@ -66,15 +65,13 @@ const MainPage = () => {
         <Navbar />
         <main className="relative z-10">
           <Hero3D />
-          <Suspense fallback={null}>
-            <About />
-            <Skills />
-            <Experience />
-            <Certifications />
-            <Projects />
-            <Contact />
-            <Footer />
-          </Suspense>
+          <div style={{ contentVisibility: 'auto' }}><About /></div>
+          <div style={{ contentVisibility: 'auto' }}><Skills /></div>
+          <div style={{ contentVisibility: 'auto' }}><Experience /></div>
+          <div style={{ contentVisibility: 'auto' }}><Certifications /></div>
+          <div style={{ contentVisibility: 'auto' }}><Projects /></div>
+          <div style={{ contentVisibility: 'auto' }}><Contact /></div>
+          <div style={{ contentVisibility: 'auto' }}><Footer /></div>
         </main>
         {!isMobile && <SectionIndicator />}
         {!isMobile && <PerformanceMonitor />}
@@ -91,12 +88,10 @@ function App() {
     <ReducedMotionProvider>
       <LoadingVeil />
       {!isMobile && <CustomCursor />}
-      <Suspense fallback={null}>
-        <Routes>
-          <Route path="/project/:slug" element={<ProjectDetail />} />
-          <Route path="/" element={<MainPage />} />
-        </Routes>
-      </Suspense>
+      <Routes>
+        <Route path="/project/:slug" element={<ProjectDetail />} />
+        <Route path="/" element={<MainPage />} />
+      </Routes>
     </ReducedMotionProvider>
   );
 }
