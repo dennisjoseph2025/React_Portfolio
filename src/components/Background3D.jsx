@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 
 const ORB_CONFIGS = [
@@ -16,176 +16,37 @@ const ORB_CONFIGS = [
   { w: 220, h: 220, color: 'rgba(140,130,35,0.22)', blur: 45, glow: 'rgba(140,130,35,0.1)', restX: 90, restY: 15, driftAmp: 42, driftSpeed: 0.38, repelR: 230, repelStr: 155 },
 ];
 
-const isMobile = () => typeof window !== 'undefined' && window.innerWidth < 768;
-
-const Orb = ({ config, globalMouse }) => {
-  const offsetX = useMotionValue(0);
-  const offsetY = useMotionValue(0);
-  const sx = useSpring(offsetX, { stiffness: 60, damping: 16, mass: 1.2 });
-  const sy = useSpring(offsetY, { stiffness: 60, damping: 16, mass: 1.2 });
-
-  const phase = useRef(Math.random() * Math.PI * 2);
-  const rafRef = useRef(null);
-  const timeRef = useRef(0);
-
-  const scale = isMobile() ? 0.55 : 1;
-
-  useEffect(() => {
-    let lastTime = performance.now();
-    const tick = (now) => {
-      const dt = Math.min((now - lastTime) / 1000, 0.05);
-      lastTime = now;
-      timeRef.current += dt;
-      const t = timeRef.current;
-
-      const driftX = Math.sin(t * config.driftSpeed + phase.current) * config.driftAmp * scale;
-      const driftY = Math.cos(t * config.driftSpeed * 0.7 + phase.current) * config.driftAmp * 0.8 * scale;
-
-      const orbCx = (config.restX / 100) * window.innerWidth;
-      const orbCy = (config.restY / 100) * window.innerHeight;
-
-      const dx = orbCx - globalMouse.x;
-      const dy = orbCy - globalMouse.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      let repelX = 0;
-      let repelY = 0;
-      if (dist < config.repelR * scale && dist > 0) {
-        const force = (1 - dist / (config.repelR * scale)) * config.repelStr * scale;
-        const angle = Math.atan2(dy, dx);
-        repelX = Math.cos(angle) * force;
-        repelY = Math.sin(angle) * force;
-      }
-
-      offsetX.set(driftX + repelX);
-      offsetY.set(driftY + repelY);
-
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, [config, globalMouse, offsetX, offsetY, scale]);
-
-  const w = config.w * scale;
-  const h = config.h * scale;
-
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        left: `${config.restX}%`,
-        top: `${config.restY}%`,
-        width: w,
-        height: h,
-        marginLeft: -w / 2,
-        marginTop: -h / 2,
-      }}
-    >
-      <motion.div
-        style={{ x: sx, y: sy, willChange: 'transform' }}
-        className="w-full h-full rounded-full pointer-events-none"
-      >
-        <div
-          className="absolute -inset-16 rounded-full pointer-events-none"
-          style={{ background: `radial-gradient(circle, ${config.glow}, transparent 65%)`, opacity: 0.8 }}
-        />
-        <div
-          className="w-full h-full rounded-full"
-          style={{
-            background: `radial-gradient(circle at 35% 35%, ${config.color}, transparent 65%)`,
-            filter: `blur(${config.blur * scale}px)`,
-          }}
-        />
-      </motion.div>
-    </div>
-  );
-};
-
 const PARTICLE_COUNT_DESKTOP = 200;
 const PARTICLE_COUNT_MOBILE = 80;
 
-const FloatingParticles = ({ globalMouse }) => {
-  const count = isMobile() ? PARTICLE_COUNT_MOBILE : PARTICLE_COUNT_DESKTOP;
-  const particles = useRef(
-    Array.from({ length: 200 }, () => ({
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      size: 2.5 + Math.random() * 4,
-      speed: 0.15 + Math.random() * 0.4,
-      phase: Math.random() * Math.PI * 2,
-      opacity: 0.45 + Math.random() * 0.35,
-    }))
-  ).current;
+const initParticles = (count) =>
+  Array.from({ length: count }, () => ({
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    size: 2.5 + Math.random() * 4,
+    speed: 0.15 + Math.random() * 0.4,
+    phase: Math.random() * Math.PI * 2,
+    opacity: 0.45 + Math.random() * 0.35,
+  }));
 
-  return (
-    <div className="absolute inset-0 pointer-events-none">
-      {particles.slice(0, count).map((p, i) => (
-        <ParticleDot key={i} config={p} globalMouse={globalMouse} />
-      ))}
-    </div>
-  );
-};
+const initOrbState = (configs) =>
+  configs.map(() => ({
+    x: 0, y: 0, smoothX: 0, smoothY: 0, phase: Math.random() * Math.PI * 2,
+  }));
 
-const ParticleDot = ({ config, globalMouse }) => {
-  const ref = useRef(null);
-  const rafRef = useRef(null);
-  const timeRef = useRef(0);
-
-  useEffect(() => {
-    let lastTime = performance.now();
-    const tick = (now) => {
-      const dt = Math.min((now - lastTime) / 1000, 0.05);
-      lastTime = now;
-      timeRef.current += dt;
-      const t = timeRef.current;
-
-      const driftX = Math.sin(t * config.speed + config.phase) * 15;
-      const driftY = Math.cos(t * config.speed * 0.6 + config.phase) * 12;
-
-      const px = (config.x / 100) * window.innerWidth;
-      const py = (config.y / 100) * window.innerHeight;
-      const dx = px - globalMouse.x;
-      const dy = py - globalMouse.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      let repelX = 0;
-      let repelY = 0;
-      if (dist < 120 && dist > 0) {
-        const force = (1 - dist / 120) * 40;
-        const angle = Math.atan2(dy, dx);
-        repelX = Math.cos(angle) * force;
-        repelY = Math.sin(angle) * force;
-      }
-
-      if (ref.current) {
-        ref.current.style.transform = `translate(${driftX + repelX}px, ${driftY + repelY}px)`;
-      }
-
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, [config, globalMouse]);
-
-  return (
-    <div
-      ref={ref}
-      style={{
-        position: 'absolute',
-        left: `${config.x}%`,
-        top: `${config.y}%`,
-        width: config.size,
-        height: config.size,
-        borderRadius: '50%',
-        background: `rgba(255,255,255,${config.opacity})`,
-        boxShadow: `0 0 ${config.size * 5}px rgba(255,255,255,${config.opacity * 0.65})`,
-      }}
-    />
-  );
-};
+const getMobile = () => typeof window !== 'undefined' && window.innerWidth < 768;
+const getCount = () => getMobile() ? PARTICLE_COUNT_MOBILE : PARTICLE_COUNT_DESKTOP;
 
 const Background3D = () => {
-  const [mouse, setMouse] = useState({ x: -9999, y: -9999 });
+  const containerRef = useRef(null);
+  const orbRefs = useRef([]);
+  const particleRefs = useRef([]);
+  const orbState = useRef(initOrbState(ORB_CONFIGS));
+  const particles = useRef(initParticles(getCount()));
+  const rafRef = useRef(null);
+  const mouseRef = useRef({ x: -9999, y: -9999 });
+  const timeRef = useRef(0);
+
   const mouseX = useMotionValue(0.5);
   const mouseY = useMotionValue(0.5);
   const mx3 = useSpring(mouseX, { stiffness: 70, damping: 18, mass: 0.8 });
@@ -193,28 +54,125 @@ const Background3D = () => {
   const tiltX = useSpring(useTransform(mouseY, [0, 1], [2, -2]), { stiffness: 20, damping: 18, mass: 3 });
   const tiltY = useSpring(useTransform(mouseX, [0, 1], [-2, 2]), { stiffness: 20, damping: 18, mass: 3 });
 
+  const m = useRef(getMobile());
+  const scale = useRef(m.current ? 0.55 : 1);
+
   useEffect(() => {
+    const checkMobile = () => {
+      m.current = window.innerWidth < 768;
+      scale.current = m.current ? 0.55 : 1;
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
     const h = (e) => {
-      setMouse({ x: e.clientX, y: e.clientY });
+      mouseRef.current = { x: e.clientX, y: e.clientY };
       mouseX.set(e.clientX / window.innerWidth);
       mouseY.set(e.clientY / window.innerHeight);
     };
     const onTouch = (e) => {
       if (e.touches.length > 0) {
         const t = e.touches[0];
-        setMouse({ x: t.clientX, y: t.clientY });
+        mouseRef.current = { x: t.clientX, y: t.clientY };
         mouseX.set(t.clientX / window.innerWidth);
         mouseY.set(t.clientY / window.innerHeight);
       }
     };
     const onTouchEnd = () => {
-      setMouse({ x: -9999, y: -9999 });
+      mouseRef.current = { x: -9999, y: -9999 };
     };
+
     window.addEventListener('mousemove', h, { passive: true });
     window.addEventListener('touchmove', onTouch, { passive: true });
     window.addEventListener('touchstart', onTouch, { passive: true });
     window.addEventListener('touchend', onTouchEnd, { passive: true });
+
+    let lastTime = performance.now();
+
+    const tick = (now) => {
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
+      timeRef.current += dt;
+      const t = timeRef.current;
+      const mx = mouseRef.current.x;
+      const my = mouseRef.current.y;
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      const s = scale.current;
+
+      const oState = orbState.current;
+      for (let i = 0; i < ORB_CONFIGS.length; i++) {
+        const cfg = ORB_CONFIGS[i];
+        const st = oState[i];
+
+        const driftX = Math.sin(t * cfg.driftSpeed + st.phase) * cfg.driftAmp * s;
+        const driftY = Math.cos(t * cfg.driftSpeed * 0.7 + st.phase) * cfg.driftAmp * 0.8 * s;
+
+        const orbCx = (cfg.restX / 100) * W;
+        const orbCy = (cfg.restY / 100) * H;
+        const dx = orbCx - mx;
+        const dy = orbCy - my;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        let repelX = 0;
+        let repelY = 0;
+        if (dist < cfg.repelR * s && dist > 0) {
+          const force = (1 - dist / (cfg.repelR * s)) * cfg.repelStr * s;
+          const angle = Math.atan2(dy, dx);
+          repelX = Math.cos(angle) * force;
+          repelY = Math.sin(angle) * force;
+        }
+
+        st.x = driftX + repelX;
+        st.y = driftY + repelY;
+        st.smoothX += (st.x - st.smoothX) * 0.08;
+        st.smoothY += (st.y - st.smoothY) * 0.08;
+
+        if (orbRefs.current[i]) {
+          orbRefs.current[i].style.transform = `translate(${st.smoothX}px, ${st.smoothY}px)`;
+        }
+      }
+
+      const pList = particles.current;
+      const pRefs = particleRefs.current;
+      for (let i = 0; i < pList.length; i++) {
+        const p = pList[i];
+        const driftX = Math.sin(t * p.speed + p.phase) * 15;
+        const driftY = Math.cos(t * p.speed * 0.6 + p.phase) * 12;
+
+        const px = (p.x / 100) * W;
+        const py = (p.y / 100) * H;
+        const dx = px - mx;
+        const dy = py - my;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        let repelX = 0;
+        let repelY = 0;
+        if (dist < 120 && dist > 0) {
+          const force = (1 - dist / 120) * 40;
+          const angle = Math.atan2(dy, dx);
+          repelX = Math.cos(angle) * force;
+          repelY = Math.sin(angle) * force;
+        }
+
+        if (pRefs[i]) {
+          pRefs[i].style.transform = `translate(${driftX + repelX}px, ${driftY + repelY}px)`;
+        }
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+
     return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
       window.removeEventListener('mousemove', h);
       window.removeEventListener('touchmove', onTouch);
       window.removeEventListener('touchstart', onTouch);
@@ -222,32 +180,88 @@ const Background3D = () => {
     };
   }, [mouseX, mouseY]);
 
-  const m = isMobile();
+  const count = m.current ? PARTICLE_COUNT_MOBILE : PARTICLE_COUNT_DESKTOP;
+  const particlesArr = particles.current;
 
   return (
-    <div className="fixed inset-0 z-0 overflow-hidden">
+    <div ref={containerRef} className="fixed inset-0 z-0 overflow-hidden">
       <div className="absolute inset-0 bg-[#050505]" />
 
       <motion.div
         className="absolute inset-0"
         style={{ rotateX: tiltX, rotateY: tiltY, transformStyle: 'preserve-3d', perspective: '1200px' }}
       >
-        {ORB_CONFIGS.map((cfg, i) => (
-          <Orb key={i} config={cfg} globalMouse={mouse} />
-        ))}
+        {ORB_CONFIGS.map((cfg, i) => {
+          const w = cfg.w * scale.current;
+          const h = cfg.h * scale.current;
+          return (
+            <div
+              key={i}
+              style={{
+                position: 'absolute',
+                left: `${cfg.restX}%`,
+                top: `${cfg.restY}%`,
+                width: w,
+                height: h,
+                marginLeft: -w / 2,
+                marginTop: -h / 2,
+              }}
+            >
+              <div
+                ref={(el) => { orbRefs.current[i] = el; }}
+                style={{ willChange: 'transform' }}
+                className="w-full h-full rounded-full pointer-events-none"
+              >
+                <div
+                  className="absolute -inset-16 rounded-full pointer-events-none"
+                  style={{ background: `radial-gradient(circle, ${cfg.glow}, transparent 65%)`, opacity: 0.8 }}
+                />
+                <div
+                  className="w-full h-full rounded-full"
+                  style={{
+                    background: `radial-gradient(circle at 35% 35%, ${cfg.color}, transparent 65%)`,
+                    filter: `blur(${cfg.blur * scale.current}px)`,
+                  }}
+                />
+              </div>
+            </div>
+          );
+        })}
 
-        <FloatingParticles globalMouse={mouse} />
+        <div className="absolute inset-0 pointer-events-none">
+          {Array.from({ length: count }).map((_, i) => {
+            const p = particlesArr[i];
+            const size = p ? p.size : 3;
+            const opacity = p ? p.opacity : 0.5;
+            return (
+              <div
+                key={i}
+                ref={(el) => { particleRefs.current[i] = el; }}
+                style={{
+                  position: 'absolute',
+                  left: `${p ? p.x : 50}%`,
+                  top: `${p ? p.y : 50}%`,
+                  width: size,
+                  height: size,
+                  borderRadius: '50%',
+                  background: `rgba(255,255,255,${opacity})`,
+                  boxShadow: `0 0 ${size * 5}px rgba(255,255,255,${opacity * 0.65})`,
+                }}
+              />
+            );
+          })}
+        </div>
 
         <div className="absolute inset-0 opacity-[0.025] pointer-events-none" style={{
           backgroundImage: `linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)`,
-          backgroundSize: `${m ? '80px 80px' : '120px 120px'}`,
+          backgroundSize: `${m.current ? '80px 80px' : '120px 120px'}`,
           transformStyle: 'preserve-3d',
           translateZ: '-40px',
           animation: 'grid-shift 40s linear infinite',
         }} />
 
         <motion.div className="absolute inset-0 pointer-events-none" style={{
-          background: useTransform([mx3, my3], ([x, y]) => `radial-gradient(${m ? '600px' : '1200px'} circle at ${x * 100}% ${y * 100}%, rgba(255,255,255,0.1), transparent 55%)`),
+          background: useTransform([mx3, my3], ([x, y]) => `radial-gradient(${m.current ? '600px' : '1200px'} circle at ${x * 100}% ${y * 100}%, rgba(255,255,255,0.1), transparent 55%)`),
         }} />
       </motion.div>
 

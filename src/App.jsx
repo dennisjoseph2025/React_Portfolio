@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import ReactLenis from '@studio-freight/react-lenis';
@@ -15,14 +15,15 @@ import SectionIndicator from './components/SectionIndicator';
 import PerformanceMonitor from './components/PerformanceMonitor';
 import AutoDemo from './components/AutoDemo';
 import Hero3D from './components/Hero3D';
-import About from './components/About';
-import Skills from './components/Skills';
-import Experience from './components/Experience';
-import Projects from './components/Projects';
-import Certifications from './components/Certifications';
-import Contact from './components/Contact';
-import Footer from './components/Footer';
-import ProjectDetail from './pages/ProjectDetail';
+
+const About = lazy(() => import('./components/About'));
+const Skills = lazy(() => import('./components/Skills'));
+const Experience = lazy(() => import('./components/Experience'));
+const Projects = lazy(() => import('./components/Projects'));
+const Certifications = lazy(() => import('./components/Certifications'));
+const Contact = lazy(() => import('./components/Contact'));
+const Footer = lazy(() => import('./components/Footer'));
+const ProjectDetail = lazy(() => import('./pages/ProjectDetail'));
 
 const MainPage = () => {
   const location = useLocation();
@@ -65,13 +66,15 @@ const MainPage = () => {
         <Navbar />
         <main className="relative z-10">
           <Hero3D />
-          <About />
-          <Skills />
-          <Experience />
-          <Certifications />
-          <Projects />
-          <Contact />
-          <Footer />
+          <Suspense fallback={null}>
+            <About />
+            <Skills />
+            <Experience />
+            <Certifications />
+            <Projects />
+            <Contact />
+            <Footer />
+          </Suspense>
         </main>
         {!isMobile && <SectionIndicator />}
         {!isMobile && <PerformanceMonitor />}
@@ -88,10 +91,12 @@ function App() {
     <ReducedMotionProvider>
       <LoadingVeil />
       {!isMobile && <CustomCursor />}
-      <Routes>
-        <Route path="/project/:slug" element={<ProjectDetail />} />
-        <Route path="/" element={<MainPage />} />
-      </Routes>
+      <Suspense fallback={null}>
+        <Routes>
+          <Route path="/project/:slug" element={<ProjectDetail />} />
+          <Route path="/" element={<MainPage />} />
+        </Routes>
+      </Suspense>
     </ReducedMotionProvider>
   );
 }

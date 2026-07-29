@@ -194,6 +194,7 @@ const ProjectDetail = () => {
                                         transition={{ duration: 0.4, ease: "easeInOut" }}
                                         className="w-full h-full object-cover object-top"
                                         alt={`${project.title} screenshot ${activeIdx + 1}`}
+                                        loading="lazy"
                                     />
                                 </AnimatePresence>
                             </div>
@@ -221,7 +222,7 @@ const ProjectDetail = () => {
                                         className={`relative w-28 sm:w-32 aspect-video rounded-xl overflow-hidden shrink-0 transition-all duration-300 ${activeIdx === idx ? 'ring-2 ring-offset-2 ring-offset-black opacity-100' : 'opacity-40 hover:opacity-100'}`}
                                         style={{ '--tw-ring-color': activeIdx === idx ? project.color : 'transparent' }}
                                     >
-                                        <img src={src} alt="thumbnail" className="w-full h-full object-cover" />
+                                        <img src={src} alt="thumbnail" className="w-full h-full object-cover" loading="lazy" />
                                         {activeIdx !== idx && <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />}
                                     </button>
                                 ))}

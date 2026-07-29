@@ -137,6 +137,7 @@ const Projects = () => {
                                         src={activeProject.image}
                                         alt={activeProject.title}
                                         className="w-full h-full object-cover"
+                                        loading="lazy"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
                                     <div className="absolute bottom-0 left-0 right-0 p-5">
@@ -390,6 +391,7 @@ const Projects = () => {
                                                                 src={activeProject.image}
                                                                 alt={activeProject.title}
                                                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                                                loading="lazy"
                                                             />
                                                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                                 <span className="px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-xs text-white font-mono uppercase tracking-wider">

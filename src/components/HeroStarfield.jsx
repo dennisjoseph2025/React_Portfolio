@@ -1,10 +1,25 @@
 import { useRef, useEffect } from 'react';
 
-const NODE_COUNT_DESKTOP = 100;
+const getTier = () => {
+  if (typeof window === 'undefined') return 1;
+  const cores = navigator.hardwareConcurrency || 4;
+  const mem = navigator.deviceMemory || 4;
+  if (cores >= 6 && mem >= 6) return 0;
+  if (cores >= 4 && mem >= 4) return 1;
+  return 2;
+};
+
+const TIER = getTier();
+
+const NODE_COUNTS = [100, 70, 40];
+const CONNECTION_DISTS = [380, 300, 200];
+const MAX_CONNECTIONS_LIST = [250, 160, 80];
+
+const NODE_COUNT_DESKTOP = NODE_COUNTS[TIER];
 const NODE_COUNT_MOBILE = 50;
-const CONNECTION_DIST_DESKTOP = 380;
+const CONNECTION_DIST_DESKTOP = CONNECTION_DISTS[TIER];
 const CONNECTION_DIST_MOBILE = 200;
-const MAX_CONNECTIONS = 250;
+const MAX_CONNECTIONS = MAX_CONNECTIONS_LIST[TIER];
 
 const JEWEL = [
   [201, 169, 110],
